@@ -1,0 +1,5 @@
+git_init.sh
+build/.moc
+build/.obj
+build/.qmake.stash
+build/qMenuEditor-x86_64.run
