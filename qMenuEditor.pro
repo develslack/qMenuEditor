@@ -5,7 +5,6 @@ CONFIG += c++17
 TARGET = qMenuEditor
 TEMPLATE = app
 
-# Rutas de salida organizadas dentro de build/
 DESTDIR     = $$PWD/build
 OBJECTS_DIR = $$PWD/build/.obj
 MOC_DIR     = $$PWD/build/.moc
@@ -20,25 +19,27 @@ INCLUDEPATH += $$PWD/src \
 SOURCES += \
     $$PWD/src/main.cpp \
     $$PWD/src/core/DesktopEntry.cpp \
+    $$PWD/src/modules/MenuAuditor.cpp \
+    $$PWD/src/ui/IconPickerDialog.cpp \
+    $$PWD/src/ui/MenuAuditDialog.cpp \
     $$PWD/src/ui/MainWindow.cpp
 
 HEADERS += \
     $$PWD/src/core/DesktopEntry.h \
+    $$PWD/src/modules/MenuAuditor.h \
+    $$PWD/src/ui/IconPickerDialog.h \
+    $$PWD/src/ui/MenuAuditDialog.h \
     $$PWD/src/ui/MainWindow.h
 
-# Permite que el binario en /opt/qMenuEditor/bin/ cargue librerías desde /opt/qMenuEditor/libs/
 QMAKE_LFLAGS += -Wl,-rpath,\'\$$ORIGIN/../libs\'
 
-# Destino base de instalación
 isEmpty(PREFIX) {
     PREFIX = /opt/qMenuEditor
 }
 
-# Ejecutable en /opt/qMenuEditor/bin/
 target.path = $$PREFIX/bin
 INSTALLS += target
 
-# Iconos de la aplicación en /opt/qMenuEditor/icons/ (si existen en resources/icons)
 exists($$PWD/resources/icons) {
     app_icons.path = $$PREFIX/icons
     app_icons.files = $$PWD/resources/icons/*

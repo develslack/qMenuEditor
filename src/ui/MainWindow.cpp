@@ -1,4 +1,7 @@
 #include "MainWindow.h"
+#include "IconPickerDialog.h"
+#include "MenuAuditor.h"
+#include "MenuAuditDialog.h"
 
 #include <QSplitter>
 #include <QVBoxLayout>
@@ -9,7 +12,6 @@
 #include <QComboBox>
 #include <QCheckBox>
 #include <QPushButton>
-#include <QLabel>
 #include <QStatusBar>
 #include <QToolBar>
 #include <QAction>
@@ -24,7 +26,10 @@
 #include <QProcess>
 #include <QRegularExpression>
 #include <QDateTime>
+#include <QTimer>
 #include <QIcon>
+#include <QMenu>
+#include <QFileDialog>
 #include <unistd.h>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -32,6 +37,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     setupUi();
     loadApplications();
+
+    // Ejecutar auditoría automáticamente justo después de renderizar la ventana principal
+    QTimer::singleShot(250, this, [this]() {
+        runMenuAudit(true);
+    });
 }
 
 void MainWindow::setupUi()
@@ -50,11 +60,13 @@ void MainWindow::setupUi()
     m_deleteAct->setEnabled(false);
 
     toolbar->addSeparator();
+    QAction *auditAct = toolbar->addAction(QIcon::fromTheme("tools-check-spelling"), "Auditar menú");
     QAction *reloadAct = toolbar->addAction(QIcon::fromTheme("view-refresh"), "Recargar");
 
     connect(newLauncherAct, &QAction::triggered, this, &MainWindow::onNewLauncherClicked);
     connect(newCategoryAct, &QAction::triggered, this, &MainWindow::onNewCategoryClicked);
     connect(m_deleteAct, &QAction::triggered, this, &MainWindow::onDeleteClicked);
+    connect(auditAct, &QAction::triggered, this, &MainWindow::onAuditMenuClicked);
     connect(reloadAct, &QAction::triggered, this, &MainWindow::onReloadClicked);
 
     // Contenedor principal dividido
@@ -81,16 +93,17 @@ void MainWindow::setupUi()
     QVBoxLayout *rightLayout = new QVBoxLayout(rightPanel);
     rightLayout->setContentsMargins(12, 12, 12, 12);
 
-    // Cabecera con vista previa de icono y nombre
+    // Cabecera con botón selector de icono y nombre
     QHBoxLayout *headerLayout = new QHBoxLayout();
-    m_iconPreview = new QLabel(rightPanel);
-    m_iconPreview->setFixedSize(48, 48);
-    m_iconPreview->setScaledContents(true);
-    m_iconPreview->setFrameShape(QFrame::StyledPanel);
+    m_iconButton = new QPushButton(rightPanel);
+    m_iconButton->setFixedSize(56, 56);
+    m_iconButton->setIconSize(QSize(44, 44));
+    m_iconButton->setCursor(Qt::PointingHandCursor);
+    m_iconButton->setToolTip("Haz clic para seleccionar un icono");
 
     m_nameEdit = new QLineEdit(rightPanel);
     m_nameEdit->setPlaceholderText("Nombre de la aplicación");
-    headerLayout->addWidget(m_iconPreview);
+    headerLayout->addWidget(m_iconButton);
     headerLayout->addWidget(m_nameEdit);
     rightLayout->addLayout(headerLayout);
 
@@ -142,7 +155,6 @@ void MainWindow::setupUi()
     splitter->setStretchFactor(0, 1);
     splitter->setStretchFactor(1, 2);
 
-    // Barra de estado indicando el modo de permisos
     if (geteuid() == 0) {
         statusBar()->showMessage("Modo ROOT activo: los cambios se guardarán directamente en el sistema (/usr/share/applications).");
     } else {
@@ -153,9 +165,116 @@ void MainWindow::setupUi()
     connect(m_appTree, &QTreeWidget::currentItemChanged, this, &MainWindow::onItemSelected);
     connect(m_searchEdit, &QLineEdit::textChanged, this, &MainWindow::onSearchTextChanged);
     connect(m_iconEdit, &QLineEdit::textChanged, this, &MainWindow::onIconTextChanged);
+    connect(m_iconButton, &QPushButton::clicked, this, &MainWindow::onIconButtonClicked);
     connect(m_runModeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onRunModeChanged);
     connect(m_testButton, &QPushButton::clicked, this, &MainWindow::onTestLauncherClicked);
     connect(m_saveButton, &QPushButton::clicked, this, &MainWindow::onSaveClicked);
+}
+
+void MainWindow::onIconButtonClicked()
+{
+    QMenu iconMenu(this);
+
+    QAction *systemIconsAct = iconMenu.addAction(
+        QIcon::fromTheme("preferences-desktop-icons"),
+        "Ver Iconos del sistema"
+    );
+    QAction *browseFileAct = iconMenu.addAction(
+        QIcon::fromTheme("document-open"),
+        "Examinar/Seleccionar Icono"
+    );
+
+    connect(systemIconsAct, &QAction::triggered, this, &MainWindow::onBrowseSystemIcons);
+    connect(browseFileAct, &QAction::triggered, this, &MainWindow::onBrowseIconFile);
+
+    iconMenu.exec(m_iconButton->mapToGlobal(QPoint(0, m_iconButton->height())));
+}
+
+void MainWindow::onBrowseSystemIcons()
+{
+    IconPickerDialog dialog(m_iconEdit->text().trimmed(), this);
+    if (dialog.exec() == QDialog::Accepted) {
+        QString chosen = dialog.selectedIcon();
+        if (!chosen.isEmpty()) {
+            m_iconEdit->setText(chosen);
+        }
+    }
+}
+
+void MainWindow::onBrowseIconFile()
+{
+    QString currentIcon = m_iconEdit->text().trimmed();
+    QString startDir = QFileInfo::exists(currentIcon)
+            ? QFileInfo(currentIcon).absolutePath()
+            : (QFileInfo::exists("/usr/share/icons") ? "/usr/share/icons" : QDir::homePath());
+
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        "Seleccionar archivo de icono",
+        startDir,
+        "Archivos de icono (*.png *.svg *.xpm *.ico);;Todos los archivos (*)"
+    );
+
+    if (filePath.isEmpty()) return;
+
+    // Si pertenece al tema de iconos del sistema, guarda el nombre estándar; si es externo, la ruta completa
+    if (filePath.startsWith("/usr/share/icons/") || filePath.startsWith("/usr/share/pixmaps/")) {
+        m_iconEdit->setText(QFileInfo(filePath).completeBaseName());
+    } else {
+        m_iconEdit->setText(filePath);
+    }
+}
+
+void MainWindow::onAuditMenuClicked()
+{
+    runMenuAudit(false);
+}
+
+void MainWindow::runMenuAudit(bool silentIfClean)
+{
+    MenuAuditReport report = MenuAuditor::analyze(m_entries);
+    if (!report.hasIssues()) {
+        if (!silentIfClean) {
+            QMessageBox::information(this, "Auditoría completada",
+                                     "No se encontraron lanzadores huérfanos ni aplicaciones repetidas.");
+        }
+        return;
+    }
+
+    MenuAuditDialog dialog(report, this);
+    if (dialog.exec() == QDialog::Accepted) {
+        const QStringList toClean = dialog.selectedKeysToClean();
+        if (toClean.isEmpty()) return;
+
+        int cleanedCount = 0;
+        for (const QString &key : toClean) {
+            if (removeOrHideEntry(key)) {
+                cleanedCount++;
+            }
+        }
+
+        loadApplications();
+        statusBar()->showMessage(
+            QString("Limpieza completada: %1 entrada(s) eliminada(s) u ocultada(s).").arg(cleanedCount),
+            6000
+        );
+    }
+}
+
+bool MainWindow::removeOrHideEntry(const QString &entryKey)
+{
+    if (!m_entries.contains(entryKey)) return false;
+
+    DesktopEntry &entry = m_entries[entryKey];
+    QString currentPath = entry.filePath();
+
+    if (geteuid() == 0 || currentPath.startsWith(QDir::homePath())) {
+        return QFile::remove(currentPath);
+    }
+
+    entry.setValue("Hidden", "true");
+    entry.setNoDisplay(true);
+    return entry.save();
 }
 
 void MainWindow::clearEditorForm()
@@ -169,7 +288,7 @@ void MainWindow::clearEditorForm()
     m_categoriesEdit->clear();
     m_terminalCheck->setChecked(false);
     m_noDisplayCheck->setChecked(false);
-    m_iconPreview->clear();
+    m_iconButton->setIcon(QIcon());
     m_testButton->setEnabled(false);
     m_saveButton->setEnabled(false);
 }
@@ -191,7 +310,6 @@ void MainWindow::loadApplications()
 
             if (!m_entries.contains(fileName)) {
                 DesktopEntry entry(path);
-                // Omitir entradas marcadas como Hidden=true
                 if (entry.isValid() && !entry.name().isEmpty()
                     && entry.value("Hidden").compare("true", Qt::CaseInsensitive) != 0) {
                     m_entries.insert(fileName, entry);
@@ -213,7 +331,6 @@ void MainWindow::loadApplications()
         categoryNodes.insert(cat, catItem);
     }
 
-    // Cargar categorías personalizadas (.directory)
     loadCustomCategories(categoryNodes);
 
     for (auto it = m_entries.constBegin(); it != m_entries.constEnd(); ++it) {
@@ -224,7 +341,9 @@ void MainWindow::loadApplications()
         auto *appItem = new QTreeWidgetItem(parentNode, QStringList() << entry.name());
         appItem->setData(0, Qt::UserRole, it.key());
 
-        QIcon icon = QIcon::fromTheme(entry.icon(), QIcon::fromTheme("application-x-executable"));
+        QIcon icon = QFileInfo::exists(entry.icon())
+                ? QIcon(entry.icon())
+                : QIcon::fromTheme(entry.icon(), QIcon::fromTheme("application-x-executable"));
         appItem->setIcon(0, icon);
     }
 
@@ -255,7 +374,7 @@ void MainWindow::loadCustomCategories(QMap<QString, QTreeWidgetItem *> &category
             auto *catItem = new QTreeWidgetItem(m_appTree, QStringList() << catName);
             catItem->setIcon(0, QIcon::fromTheme(dirEntry.icon(), QIcon::fromTheme("folder")));
             catItem->setData(0, Qt::UserRole + 1, xdgTag);
-            catItem->setData(0, Qt::UserRole + 2, fullPath); // Ruta real del archivo .directory
+            catItem->setData(0, Qt::UserRole + 2, fullPath);
 
             categoryNodes.insert(catName, catItem);
             m_customCategoryNames.insert(xdgTag, catName);
@@ -417,19 +536,16 @@ bool MainWindow::removeFileAsRoot(const QString &filePath)
         return QFile::remove(filePath);
     }
 
-    // 1. Intentar elevación gráfica mediante pkexec (Polkit)
     if (!QStandardPaths::findExecutable("pkexec").isEmpty()) {
         int exitCode = QProcess::execute("pkexec", QStringList() << "rm" << "-f" << filePath);
         if (exitCode == 0 && !QFile::exists(filePath)) {
             return true;
         }
-        // Si el usuario canceló el diálogo de contraseña (126/127), no insistimos
         if (exitCode == 126 || exitCode == 127) {
             return false;
         }
     }
 
-    // 2. Fallback para Slackware sin agente Polkit activo: terminal con su -c
     QString term = detectTerminalEmulator();
     if (!term.isEmpty()) {
         QString escapedPath = filePath;
@@ -455,7 +571,6 @@ void MainWindow::onDeleteClicked()
 
     QString entryKey = current->data(0, Qt::UserRole).toString();
 
-    // CASO A: Es una categoría
     if (entryKey.isEmpty()) {
         QString dirFilePath = current->data(0, Qt::UserRole + 2).toString();
         if (dirFilePath.isEmpty()) {
@@ -497,7 +612,6 @@ void MainWindow::onDeleteClicked()
         return;
     }
 
-    // CASO B: Es un lanzador (.desktop) - No pide contraseña root
     if (!m_entries.contains(entryKey)) return;
     DesktopEntry &entry = m_entries[entryKey];
     QString currentPath = entry.filePath();
@@ -512,10 +626,8 @@ void MainWindow::onDeleteClicked()
 
     if (reply != QMessageBox::Yes) return;
 
-    // Si somos root o el archivo pertenece al usuario (~/.local/share/applications)
     if (geteuid() == 0 || currentPath.startsWith(QDir::homePath())) {
         if (QFile::remove(currentPath)) {
-            // Comprobar si existía una versión original del sistema que ahora vuelve a quedar activa
             QString systemFallback = "/usr/share/applications/" + entryKey;
             if (geteuid() != 0 && QFile::exists(systemFallback)) {
                 DesktopEntry original(systemFallback);
@@ -535,11 +647,7 @@ void MainWindow::onDeleteClicked()
             QMessageBox::warning(this, "Error", "No se pudo eliminar el archivo:\n" + currentPath);
         }
     } else {
-        // Usuario normal eliminando un lanzador del sistema (/usr/share/...):
-        // Estándar XDG: crear copia local con Hidden=true y NoDisplay=true
-        entry.setValue("Hidden", "true");
-        entry.setNoDisplay(true);
-        if (entry.save()) {
+        if (removeOrHideEntry(entryKey)) {
             m_entries.remove(entryKey);
             delete current;
             clearEditorForm();
@@ -687,7 +795,6 @@ void MainWindow::onItemSelected(QTreeWidgetItem *current, QTreeWidgetItem *)
 
     QString key = current->data(0, Qt::UserRole).toString();
 
-    // Si es una categoría (no tiene entryKey)
     if (key.isEmpty() || !m_entries.contains(key)) {
         clearEditorForm();
         QString dirFilePath = current->data(0, Qt::UserRole + 2).toString();
@@ -700,7 +807,6 @@ void MainWindow::onItemSelected(QTreeWidgetItem *current, QTreeWidgetItem *)
         return;
     }
 
-    // Es un lanzador
     m_deleteAct->setEnabled(true);
     m_currentKey = key;
     const DesktopEntry &entry = m_entries[key];
@@ -757,7 +863,7 @@ void MainWindow::onIconTextChanged(const QString &iconName)
     } else {
         icon = QIcon::fromTheme(iconName, QIcon::fromTheme("application-x-executable"));
     }
-    m_iconPreview->setPixmap(icon.pixmap(48, 48));
+    m_iconButton->setIcon(icon);
 }
 
 void MainWindow::onSaveClicked()
@@ -781,7 +887,10 @@ void MainWindow::onSaveClicked()
         statusBar()->showMessage("Guardado en: " + entry.filePath(), 5000);
         if (QTreeWidgetItem *item = m_appTree->currentItem()) {
             item->setText(0, entry.name());
-            item->setIcon(0, QIcon::fromTheme(entry.icon(), QIcon::fromTheme("application-x-executable")));
+            QIcon icon = QFileInfo::exists(entry.icon())
+                    ? QIcon(entry.icon())
+                    : QIcon::fromTheme(entry.icon(), QIcon::fromTheme("application-x-executable"));
+            item->setIcon(0, icon);
         }
     } else {
         QMessageBox::warning(this, "Error al guardar",

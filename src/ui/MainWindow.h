@@ -12,7 +12,6 @@ class QLineEdit;
 class QComboBox;
 class QCheckBox;
 class QPushButton;
-class QLabel;
 
 class MainWindow : public QMainWindow
 {
@@ -33,10 +32,14 @@ private slots:
     void onItemSelected(QTreeWidgetItem *current, QTreeWidgetItem *previous);
     void onSearchTextChanged(const QString &text);
     void onIconTextChanged(const QString &iconName);
+    void onIconButtonClicked();
+    void onBrowseSystemIcons();
+    void onBrowseIconFile();
     void onRunModeChanged(int index);
     void onNewLauncherClicked();
     void onNewCategoryClicked();
     void onDeleteClicked();
+    void onAuditMenuClicked();
     void onTestLauncherClicked();
     void onSaveClicked();
     void onReloadClicked();
@@ -44,6 +47,8 @@ private slots:
 private:
     void setupUi();
     void loadApplications();
+    void runMenuAudit(bool silentIfClean);
+    bool removeOrHideEntry(const QString &entryKey);
     void loadCustomCategories(QMap<QString, QTreeWidgetItem *> &categoryNodes);
     QString mapMainCategory(const QStringList &categories, const QMap<QString, QTreeWidgetItem *> &categoryNodes) const;
     QString categoryToXdgTag(const QString &displayName) const;
@@ -64,7 +69,7 @@ private:
     QTreeWidget *m_appTree = nullptr;
 
     // Widgets del editor
-    QLabel *m_iconPreview = nullptr;
+    QPushButton *m_iconButton = nullptr;
     QLineEdit *m_nameEdit = nullptr;
     QLineEdit *m_commentEdit = nullptr;
     QLineEdit *m_execEdit = nullptr;
@@ -79,7 +84,7 @@ private:
 
     // Estado interno
     QMap<QString, DesktopEntry> m_entries;
-    QMap<QString, QString> m_customCategoryNames; // XDG Tag -> Display Name
+    QMap<QString, QString> m_customCategoryNames;
     QString m_currentKey;
 };
 
