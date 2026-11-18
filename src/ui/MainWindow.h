@@ -43,6 +43,7 @@ private slots:
     void onTestLauncherClicked();
     void onSaveClicked();
     void onReloadClicked();
+    void onAboutClicked();
 
 private:
     void setupUi();

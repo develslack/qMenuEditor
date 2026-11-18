@@ -2,6 +2,7 @@
 #include "IconPickerDialog.h"
 #include "MenuAuditor.h"
 #include "MenuAuditDialog.h"
+#include "AboutDialog.h"
 
 #include <QSplitter>
 #include <QVBoxLayout>
@@ -63,11 +64,18 @@ void MainWindow::setupUi()
     QAction *auditAct = toolbar->addAction(QIcon::fromTheme("tools-check-spelling"), "Auditar menú");
     QAction *reloadAct = toolbar->addAction(QIcon::fromTheme("view-refresh"), "Recargar");
 
+    QWidget *spacer = new QWidget(toolbar);
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    toolbar->addWidget(spacer);
+
+    QAction *aboutAct = toolbar->addAction(QIcon::fromTheme("help-about"), "Acerca de...");
+
     connect(newLauncherAct, &QAction::triggered, this, &MainWindow::onNewLauncherClicked);
     connect(newCategoryAct, &QAction::triggered, this, &MainWindow::onNewCategoryClicked);
     connect(m_deleteAct, &QAction::triggered, this, &MainWindow::onDeleteClicked);
     connect(auditAct, &QAction::triggered, this, &MainWindow::onAuditMenuClicked);
     connect(reloadAct, &QAction::triggered, this, &MainWindow::onReloadClicked);
+    connect(aboutAct, &QAction::triggered, this, &MainWindow::onAboutClicked);
 
     // Contenedor principal dividido
     QSplitter *splitter = new QSplitter(Qt::Horizontal, this);
@@ -902,4 +910,10 @@ void MainWindow::onReloadClicked()
 {
     loadApplications();
     statusBar()->showMessage("Lista de aplicaciones recargada.", 3000);
+}
+
+void MainWindow::onAboutClicked()
+{
+    AboutDialog dialog(this);
+    dialog.exec();
 }

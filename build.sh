@@ -159,6 +159,8 @@ if [ "$DO_DEPLOY" = true ]; then
     echo -e "${YELLOW}==> Preparando empaquetado autocontenido para ${ARCH}...${NC}"
     rm -rf "${STAGE_DIR}"
     mkdir -p "${STAGE_DIR}/bin" "${STAGE_DIR}/libs" "${STAGE_DIR}/plugins" "${STAGE_DIR}/icons"
+    mkdir -p "${STAGE_DIR}/documentation"
+    cp -r documentation/*.txt "${STAGE_DIR}/documentation/" 2>/dev/null || true
 
     # Copiar ejecutable y eliminar símbolos de depuración innecesarios
     cp "${BIN_PATH}" "${STAGE_DIR}/bin/${APP_NAME}"

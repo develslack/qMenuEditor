@@ -57,17 +57,21 @@ SOURCES       = ../src/main.cpp \
 		../src/modules/MenuAuditor.cpp \
 		../src/ui/IconPickerDialog.cpp \
 		../src/ui/MenuAuditDialog.cpp \
+		../src/ui/AboutDialog.cpp \
 		../src/ui/MainWindow.cpp .moc/moc_IconPickerDialog.cpp \
 		.moc/moc_MenuAuditDialog.cpp \
+		.moc/moc_AboutDialog.cpp \
 		.moc/moc_MainWindow.cpp
 OBJECTS       = .obj/main.o \
 		.obj/DesktopEntry.o \
 		.obj/MenuAuditor.o \
 		.obj/IconPickerDialog.o \
 		.obj/MenuAuditDialog.o \
+		.obj/AboutDialog.o \
 		.obj/MainWindow.o \
 		.obj/moc_IconPickerDialog.o \
 		.obj/moc_MenuAuditDialog.o \
+		.obj/moc_AboutDialog.o \
 		.obj/moc_MainWindow.o
 DIST          = /usr/lib64/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib64/qt5/mkspecs/common/unix.conf \
@@ -435,11 +439,13 @@ DIST          = /usr/lib64/qt5/mkspecs/features/spec_pre.prf \
 		../src/modules/MenuAuditor.h \
 		../src/ui/IconPickerDialog.h \
 		../src/ui/MenuAuditDialog.h \
+		../src/ui/AboutDialog.h \
 		../src/ui/MainWindow.h ../src/main.cpp \
 		../src/core/DesktopEntry.cpp \
 		../src/modules/MenuAuditor.cpp \
 		../src/ui/IconPickerDialog.cpp \
 		../src/ui/MenuAuditDialog.cpp \
+		../src/ui/AboutDialog.cpp \
 		../src/ui/MainWindow.cpp
 QMAKE_TARGET  = qMenuEditor
 DESTDIR       = ./
@@ -1195,8 +1201,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib64/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../src/core/DesktopEntry.h ../src/modules/MenuAuditor.h ../src/ui/IconPickerDialog.h ../src/ui/MenuAuditDialog.h ../src/ui/MainWindow.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../src/main.cpp ../src/core/DesktopEntry.cpp ../src/modules/MenuAuditor.cpp ../src/ui/IconPickerDialog.cpp ../src/ui/MenuAuditDialog.cpp ../src/ui/MainWindow.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../src/core/DesktopEntry.h ../src/modules/MenuAuditor.h ../src/ui/IconPickerDialog.h ../src/ui/MenuAuditDialog.h ../src/ui/AboutDialog.h ../src/ui/MainWindow.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../src/main.cpp ../src/core/DesktopEntry.cpp ../src/modules/MenuAuditor.cpp ../src/ui/IconPickerDialog.cpp ../src/ui/MenuAuditDialog.cpp ../src/ui/AboutDialog.cpp ../src/ui/MainWindow.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -1228,9 +1234,9 @@ compiler_moc_predefs_clean:
 .moc/moc_predefs.h: /usr/lib64/qt5/mkspecs/features/data/dummy.cpp
 	g++ -pipe -g -std=gnu++1z -Wall -Wextra -dM -E -o .moc/moc_predefs.h /usr/lib64/qt5/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all: .moc/moc_IconPickerDialog.cpp .moc/moc_MenuAuditDialog.cpp .moc/moc_MainWindow.cpp
+compiler_moc_header_make_all: .moc/moc_IconPickerDialog.cpp .moc/moc_MenuAuditDialog.cpp .moc/moc_AboutDialog.cpp .moc/moc_MainWindow.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) .moc/moc_IconPickerDialog.cpp .moc/moc_MenuAuditDialog.cpp .moc/moc_MainWindow.cpp
+	-$(DEL_FILE) .moc/moc_IconPickerDialog.cpp .moc/moc_MenuAuditDialog.cpp .moc/moc_AboutDialog.cpp .moc/moc_MainWindow.cpp
 .moc/moc_IconPickerDialog.cpp: ../src/ui/IconPickerDialog.h \
 		.moc/moc_predefs.h \
 		/usr/lib64/qt5/bin/moc
@@ -1242,6 +1248,11 @@ compiler_moc_header_clean:
 		.moc/moc_predefs.h \
 		/usr/lib64/qt5/bin/moc
 	/usr/lib64/qt5/bin/moc $(DEFINES) --include /home/augusto/projects/QT/qMenuEditor/build/.moc/moc_predefs.h -I/usr/lib64/qt5/mkspecs/linux-g++ -I/home/augusto/projects/QT/qMenuEditor -I/home/augusto/projects/QT/qMenuEditor/src -I/home/augusto/projects/QT/qMenuEditor/src/core -I/home/augusto/projects/QT/qMenuEditor/src/modules -I/home/augusto/projects/QT/qMenuEditor/src/ui -I/usr/include/qt5 -I/usr/include/qt5/QtWidgets -I/usr/include/qt5/QtGui -I/usr/include/qt5/QtXml -I/usr/include/qt5/QtCore -I. -I/usr/include/c++/11.2.0 -I/usr/include/c++/11.2.0/x86_64-slackware-linux -I/usr/include/c++/11.2.0/backward -I/usr/lib64/gcc/x86_64-slackware-linux/11.2.0/include -I/usr/local/include -I/usr/lib64/gcc/x86_64-slackware-linux/11.2.0/include-fixed -I/usr/include ../src/ui/MenuAuditDialog.h -o .moc/moc_MenuAuditDialog.cpp
+
+.moc/moc_AboutDialog.cpp: ../src/ui/AboutDialog.h \
+		.moc/moc_predefs.h \
+		/usr/lib64/qt5/bin/moc
+	/usr/lib64/qt5/bin/moc $(DEFINES) --include /home/augusto/projects/QT/qMenuEditor/build/.moc/moc_predefs.h -I/usr/lib64/qt5/mkspecs/linux-g++ -I/home/augusto/projects/QT/qMenuEditor -I/home/augusto/projects/QT/qMenuEditor/src -I/home/augusto/projects/QT/qMenuEditor/src/core -I/home/augusto/projects/QT/qMenuEditor/src/modules -I/home/augusto/projects/QT/qMenuEditor/src/ui -I/usr/include/qt5 -I/usr/include/qt5/QtWidgets -I/usr/include/qt5/QtGui -I/usr/include/qt5/QtXml -I/usr/include/qt5/QtCore -I. -I/usr/include/c++/11.2.0 -I/usr/include/c++/11.2.0/x86_64-slackware-linux -I/usr/include/c++/11.2.0/backward -I/usr/lib64/gcc/x86_64-slackware-linux/11.2.0/include -I/usr/local/include -I/usr/lib64/gcc/x86_64-slackware-linux/11.2.0/include-fixed -I/usr/include ../src/ui/AboutDialog.h -o .moc/moc_AboutDialog.cpp
 
 .moc/moc_MainWindow.cpp: ../src/ui/MainWindow.h \
 		../src/core/DesktopEntry.h \
@@ -1284,11 +1295,15 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean
 		../src/core/DesktopEntry.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o .obj/MenuAuditDialog.o ../src/ui/MenuAuditDialog.cpp
 
+.obj/AboutDialog.o: ../src/ui/AboutDialog.cpp ../src/ui/AboutDialog.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o .obj/AboutDialog.o ../src/ui/AboutDialog.cpp
+
 .obj/MainWindow.o: ../src/ui/MainWindow.cpp ../src/ui/MainWindow.h \
 		../src/core/DesktopEntry.h \
 		../src/ui/IconPickerDialog.h \
 		../src/modules/MenuAuditor.h \
-		../src/ui/MenuAuditDialog.h
+		../src/ui/MenuAuditDialog.h \
+		../src/ui/AboutDialog.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o .obj/MainWindow.o ../src/ui/MainWindow.cpp
 
 .obj/moc_IconPickerDialog.o: .moc/moc_IconPickerDialog.cpp 
@@ -1296,6 +1311,9 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean
 
 .obj/moc_MenuAuditDialog.o: .moc/moc_MenuAuditDialog.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o .obj/moc_MenuAuditDialog.o .moc/moc_MenuAuditDialog.cpp
+
+.obj/moc_AboutDialog.o: .moc/moc_AboutDialog.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o .obj/moc_AboutDialog.o .moc/moc_AboutDialog.cpp
 
 .obj/moc_MainWindow.o: .moc/moc_MainWindow.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o .obj/moc_MainWindow.o .moc/moc_MainWindow.cpp
@@ -1311,9 +1329,26 @@ uninstall_target: FORCE
 	-$(DEL_DIR) $(INSTALL_ROOT)/opt/qMenuEditor/bin/ 
 
 
-install: install_target  FORCE
+install_app_docs: first FORCE
+	@test -d $(INSTALL_ROOT)/opt/qMenuEditor/documentation || mkdir -p $(INSTALL_ROOT)/opt/qMenuEditor/documentation
+	$(QINSTALL) /home/augusto/projects/QT/qMenuEditor/documentation/bsd.txt $(INSTALL_ROOT)/opt/qMenuEditor/documentation/bsd.txt
+	$(QINSTALL) /home/augusto/projects/QT/qMenuEditor/documentation/Developer\ Guide\ -\ qMenuEditor.pdf $(INSTALL_ROOT)/opt/qMenuEditor/documentation/Developer\ Guide\ -\ qMenuEditor.pdf
+	$(QINSTALL) /home/augusto/projects/QT/qMenuEditor/documentation/gpl2.txt $(INSTALL_ROOT)/opt/qMenuEditor/documentation/gpl2.txt
+	$(QINSTALL) /home/augusto/projects/QT/qMenuEditor/documentation/Guía\ para\ Desarrolladores\ -\ qMenuEditor.pdf $(INSTALL_ROOT)/opt/qMenuEditor/documentation/Guía\ para\ Desarrolladores\ -\ qMenuEditor.pdf
+	$(QINSTALL) /home/augusto/projects/QT/qMenuEditor/documentation/lgpl.txt $(INSTALL_ROOT)/opt/qMenuEditor/documentation/lgpl.txt
 
-uninstall: uninstall_target  FORCE
+uninstall_app_docs: FORCE
+	-$(DEL_FILE) -r $(INSTALL_ROOT)/opt/qMenuEditor/documentation/lgpl.txt
+	-$(DEL_FILE) -r $(INSTALL_ROOT)/opt/qMenuEditor/documentation/Guía\ para\ Desarrolladores\ -\ qMenuEditor.pdf
+	-$(DEL_FILE) -r $(INSTALL_ROOT)/opt/qMenuEditor/documentation/gpl2.txt
+	-$(DEL_FILE) -r $(INSTALL_ROOT)/opt/qMenuEditor/documentation/Developer\ Guide\ -\ qMenuEditor.pdf
+	-$(DEL_FILE) -r $(INSTALL_ROOT)/opt/qMenuEditor/documentation/bsd.txt
+	-$(DEL_DIR) $(INSTALL_ROOT)/opt/qMenuEditor/documentation/ 
+
+
+install: install_target install_app_docs  FORCE
+
+uninstall: uninstall_target uninstall_app_docs  FORCE
 
 FORCE:
 
