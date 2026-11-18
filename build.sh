@@ -137,7 +137,7 @@ generate_desktop_file() {
 
     cat > "${dest_file}" << EOF
 [Desktop Entry]
-Version=1.0
+Version=0.1.0
 Type=Application
 Name=qMenuEditor
 GenericName=Editor de Menú
@@ -145,7 +145,7 @@ Comment=Editor ligero de entradas de menú XDG en Qt/C++
 Exec=${INSTALL_DIR}/bin/${APP_NAME}
 Icon=${icon_value}
 Terminal=false
-Categories=Settings;DesktopSettings;Qt;
+Categories=Settings;DesktopSettings;Qt;System;
 StartupNotify=true
 EOF
 }
